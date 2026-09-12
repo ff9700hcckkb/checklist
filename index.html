@@ -332,7 +332,7 @@
   <aside>
     <div class="field">
       <label for="tripName">行程名稱</label>
-      <input type="text" id="tripName" placeholder="例：南湖大山 O 型">
+      <input type="text" id="tripName">
     </div>
     <div class="field">
       <label>日期區間</label>
@@ -489,7 +489,7 @@ async function loadLiveData(){
     DATA = freshData;
     items = buildItemsFromData(DATA);
     render();
-    updateTimeEl.textContent = `資料更新時間：${formatTimestamp(new Date())}（已同步 Google 試算表最新內容）`;
+    updateTimeEl.textContent = `資料更新時間：${formatTimestamp(new Date())}`;
   } catch (err) {
     DATA = [];
     items = [];
