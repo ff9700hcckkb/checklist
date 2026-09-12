@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>裝備清單 · 行程打包工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EFE9DC;
+    --paper-light:#FBF8F1;
+    --ink:#2B2A25;
+    --ink-soft:#5C594E;
+    --forest:#3F5B44;
+    --forest-dark:#2E4433;
+    --rust:#B0532A;
+    --stone:#C7BEA6;
+    --stone-light:#E3DBC7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Noto Sans TC', sans-serif;
+    line-height:1.5;
+    min-height:100vh;
+  }
+  .contour{
+    position:relative;
+    overflow:hidden;
+    background:var(--forest-dark);
+    color:var(--paper-light);
+    padding:38px 32px 30px;
+  }
+  .contour svg{
+    position:absolute; inset:0; width:100%; height:100%;
+    opacity:0.16;
+  }
+  .contour-inner{position:relative; z-index:1; max-width:1180px; margin:0 auto;}
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    color:#C9D8C7;
+    margin:0 0 8px;
+  }
+  h1{
+    font-family:'Noto Serif TC', serif;
+    font-weight:700;
+    font-size:clamp(26px,4vw,38px);
+    margin:0 0 6px;
+    letter-spacing:0.01em;
+  }
+  .sub{
+    color:#D8DED2;
+    font-size:14.5px;
+    max-width:640px;
+    margin:0 0 10px;
+  }
+  .update-time{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:#AEBBA9;
+    margin:0;
+  }
+  .layout{
+    max-width:1180px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:290px 1fr;
+    gap:0;
+    align-items:start;
+  }
+  @media (max-width: 860px){
+    .layout{grid-template-columns:1fr;}
+  }
+  aside{
+    position:sticky;
+    top:0;
+    padding:28px 24px 40px;
+    border-right:1px solid var(--stone);
+    min-height:calc(100vh - 130px);
+  }
+  @media (max-width: 860px){
+    aside{position:relative; border-right:none; border-bottom:1px solid var(--stone); min-height:auto;}
+  }
+  .field{margin-bottom:18px;}
+  .field label{
+    display:block;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    padding:9px 10px;
+    border:1px solid var(--stone);
+    background:var(--paper-light);
+    border-radius:2px;
+    font-family:'Noto Sans TC', sans-serif;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .field input:focus{
+    outline:none;
+    border-color:var(--forest);
+  }
+  .date-row{display:flex; align-items:center; gap:8px;}
+  .date-row span{color:var(--ink-soft); font-size:13px;}
+  .summary{
+    margin-top:8px;
+    padding-top:18px;
+    border-top:1px dashed var(--stone);
+  }
+  .summary-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:6px 0;
+  }
+  .summary-row .label{font-size:13px; color:var(--ink-soft);}
+  .summary-row .value{
+    font-family:'JetBrains Mono', monospace;
+    font-weight:600;
+    font-size:15px;
+  }
+  .summary-row.total .value{
+    font-size:22px;
+    color:var(--forest);
+  }
+  .btn{
+    width:100%;
+    padding:11px 12px;
+    border:none;
+    border-radius:2px;
+    font-family:'Noto Sans TC', sans-serif;
+    font-size:14.5px;
+    font-weight:500;
+    cursor:pointer;
+    transition:transform 0.08s ease, background 0.15s ease;
+  }
+  .btn-export{
+    background:var(--rust);
+    color:#FBF8F1;
+    margin-top:16px;
+  }
+  .btn-export:hover{background:#96431f;}
+  .btn-export:active{transform:scale(0.98);}
+  .btn-clear{
+    background:transparent;
+    color:var(--ink-soft);
+    border:1px solid var(--stone);
+    margin-top:8px;
+  }
+  .btn-clear:hover{border-color:var(--ink-soft); color:var(--ink);}
+  main{padding:24px 28px 110px;}
+  .footer-bar{
+    position:fixed;
+    left:0; right:0; bottom:0;
+    background:var(--paper-light);
+    border-top:1px solid var(--stone);
+    box-shadow:0 -4px 14px rgba(43,42,37,0.08);
+    z-index:40;
+  }
+  .footer-inner{
+    max-width:1180px;
+    margin:0 auto;
+    padding:12px 28px;
+    display:flex;
+    align-items:center;
+    gap:24px;
+  }
+  .footer-inner .summary-row{
+    display:flex;
+    flex-direction:column-reverse;
+    align-items:flex-start;
+    gap:0;
+    padding:0;
+  }
+  .footer-inner .summary-row .label{font-size:11.5px;}
+  .footer-inner .summary-row.total .value{font-size:19px;}
+  .footer-inner .btn{width:auto; margin-top:0; padding:10px 18px; white-space:nowrap;}
+  .footer-inner .btn-export{margin-left:auto;}
+  @media (max-width:640px){
+    .footer-inner{flex-wrap:wrap; gap:10px 16px; padding:10px 16px;}
+    .footer-inner .btn-export{margin-left:0;}
+    .footer-inner .btn{flex:1;}
+  }
+  .category{margin-bottom:8px;}
+  .category-head{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    padding:14px 0 8px;
+    border-bottom:1px solid var(--ink);
+    margin-bottom:2px;
+  }
+  .category-head h2{
+    font-family:'Noto Serif TC', serif;
+    font-size:17px;
+    font-weight:700;
+    margin:0;
+  }
+  .category-head .count{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+  }
+  .item-row{
+    display:grid;
+    grid-template-columns:22px 1fr auto;
+    gap:12px;
+    align-items:start;
+    padding:10px 4px;
+    border-bottom:1px solid var(--stone-light);
+    cursor:pointer;
+  }
+  .item-row:hover{background:var(--stone-light);}
+  .item-row input[type=checkbox]{
+    margin-top:3px;
+    width:16px;
+    height:16px;
+    accent-color:var(--rust);
+    cursor:pointer;
+  }
+  .item-name{font-size:14.5px;}
+  .item-note{
+    display:block;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .item-row.checked .item-name{color:var(--forest);}
+  .item-weight{
+    font-family:'JetBrains Mono', monospace;
+    font-size:13.5px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    text-align:right;
+    min-width:56px;
+  }
+  .item-row.checked .item-weight{color:var(--forest); font-weight:600;}
+  .item-row.custom{grid-template-columns:22px 1fr auto auto;}
+  .item-delete{
+    background:none;
+    border:none;
+    color:var(--ink-soft);
+    font-size:16px;
+    line-height:1;
+    cursor:pointer;
+    padding:2px 4px;
+  }
+  .item-delete:hover{color:var(--rust);}
+  .add-item-row{
+    display:flex;
+    gap:10px;
+    padding:14px 4px 6px;
+    flex-wrap:wrap;
+  }
+  .add-item-row input[type=text]{
+    flex:1;
+    min-width:180px;
+  }
+  .add-item-row input[type=number]{
+    width:120px;
+  }
+  .add-item-row input{
+    padding:9px 10px;
+    border:1px solid var(--stone);
+    background:var(--paper-light);
+    border-radius:2px;
+    font-family:'Noto Sans TC', sans-serif;
+    font-size:14px;
+    color:var(--ink);
+  }
+  .add-item-row input:focus{outline:none; border-color:var(--forest);}
+  .btn-add{
+    padding:9px 18px;
+    border:none;
+    border-radius:2px;
+    background:var(--forest);
+    color:var(--paper-light);
+    font-family:'Noto Sans TC', sans-serif;
+    font-size:14px;
+    font-weight:500;
+    cursor:pointer;
+  }
+  .btn-add:hover{background:var(--forest-dark);}
+  .empty-note{
+    font-size:13px;
+    color:var(--ink-soft);
+    padding:10px 4px;
+    font-style:normal;
+  }
+  .toast{
+    position:fixed;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);
+    color:var(--paper-light);
+    padding:10px 18px;
+    border-radius:3px;
+    font-size:13.5px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.2s ease, transform 0.2s ease;
+    z-index:50;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+
+<div class="contour">
+  <svg viewBox="0 0 1200 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,150 C150,100 300,180 450,140 C600,100 750,160 900,120 C1050,90 1150,140 1200,110" stroke="#FBF8F1" fill="none" stroke-width="2"/>
+    <path d="M0,170 C150,130 300,190 450,160 C600,130 750,180 900,150 C1050,120 1150,160 1200,140" stroke="#FBF8F1" fill="none" stroke-width="2"/>
+    <path d="M0,60 C150,20 300,90 450,50 C600,20 750,80 900,40 C1050,10 1150,60 1200,30" stroke="#FBF8F1" fill="none" stroke-width="2"/>
+  </svg>
+  <div class="contour-inner">
+    <p class="eyebrow">行程裝備清單工具</p>
+    <h1>這趟要帶什麼</h1>
+    <p class="sub">輸入行程與日期，勾選這趟會用到的裝備，重量會即時加總，最後把清單匯出成文字檔。</p>
+    <p class="update-time" id="updateTime">正在讀取最新裝備資料…</p>
+  </div>
+</div>
+
+<div class="layout">
+  <aside>
+    <div class="field">
+      <label for="tripName">行程名稱</label>
+      <input type="text" id="tripName" placeholder="例：南湖大山 O 型">
+    </div>
+    <div class="field">
+      <label>日期區間</label>
+      <div class="date-row">
+        <input type="date" id="dateStart">
+        <span>—</span>
+        <input type="date" id="dateEnd">
+      </div>
+    </div>
+
+  </aside>
+
+  <main>
+    <div id="checklist"></div>
+
+    <section class="category" id="customCategory">
+      <div class="category-head">
+        <h2>自訂項目</h2>
+        <span class="count" id="customCount">0/0</span>
+      </div>
+      <div id="customItemsList"></div>
+      <form id="addItemForm" class="add-item-row">
+        <input type="text" id="newItemName" placeholder="裝備名稱，例如：行動糧" required>
+        <input type="number" id="newItemWeight" placeholder="重量(g)，可留空" min="0" step="0.1">
+        <button type="submit" class="btn-add">新增</button>
+      </form>
+    </section>
+  </main>
+</div>
+
+<footer class="footer-bar">
+  <div class="footer-inner">
+    <div class="summary-row">
+      <span class="label">已勾選件數</span>
+      <span class="value" id="countValue">0 / 0</span>
+    </div>
+    <div class="summary-row total">
+      <span class="label">總重量</span>
+      <span class="value" id="totalWeight">0 g</span>
+    </div>
+    <button class="btn btn-export" id="exportBtn">匯出裝備清單</button>
+    <button class="btn btn-clear" id="clearBtn">清空勾選</button>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRlXmSPHLL8h6vEgTTixRaOLXIocECbvPdORt_sDeXeJuCeTAIDUNtTxq0YXnb6IK8I7NPcAP8q_CzW/pub?output=csv";
+
+let DATA = [];
+let uid = 0;
+let items = [];
+
+function buildItemsFromData(dataArr){
+  uid = 0;
+  const list = [];
+  dataArr.forEach(([cat, rows]) => {
+    rows.forEach(([name, weight, note]) => {
+      list.push({id: uid++, cat, name, weight, note, checked:false});
+    });
+  });
+  return list;
+}
+
+let customUid = 0;
+const customItems = [];
+
+const checklistEl = document.getElementById('checklist');
+const customListEl = document.getElementById('customItemsList');
+const customCountEl = document.getElementById('customCount');
+const updateTimeEl = document.getElementById('updateTime');
+
+function parseCSV(text){
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  for (let i = 0; i < text.length; i++){
+    const c = text[i];
+    if (inQuotes){
+      if (c === '"'){
+        if (text[i+1] === '"'){ field += '"'; i++; }
+        else inQuotes = false;
+      } else field += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ''; }
+      else if (c === '\r') { /* skip */ }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+      else field += c;
+    }
+  }
+  if (field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+  return rows;
+}
+
+function parseWeight(raw){
+  if (raw === undefined) return null;
+  const cleaned = raw.trim().replace(/[^\d.]/g, '');
+  if (cleaned === '') return null;
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? null : n;
+}
+
+function buildDataFromRows(rows){
+  const dataRows = rows.slice(1).filter(r => r.some(c => c && c.trim() !== ''));
+  const grouped = [];
+  let currentCat = null;
+  let currentList = null;
+
+  dataRows.forEach(r => {
+    const catRaw = (r[0] || '').trim();
+    const name = (r[1] || '').trim();
+    const weight = parseWeight(r[2] || '');
+    const note = (r[3] || '').trim();
+    if (!name) return;
+
+    if (catRaw){
+      currentCat = catRaw;
+      currentList = [];
+      grouped.push([currentCat, currentList]);
+    }
+    if (!currentList){
+      currentCat = '其它';
+      currentList = [];
+      grouped.push([currentCat, currentList]);
+    }
+    currentList.push([name, weight, note]);
+  });
+
+  return grouped;
+}
+
+function formatTimestamp(d){
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+async function loadLiveData(){
+  updateTimeEl.textContent = '正在讀取最新裝備資料…';
+  checklistEl.innerHTML = '<p class="empty-note">正在從 Google 試算表讀取資料…</p>';
+
+  try {
+    const res = await fetch(SHEET_CSV_URL, {cache: 'no-store'});
+    if (!res.ok) throw new Error('fetch failed: ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    const freshData = buildDataFromRows(rows);
+    const totalItems = freshData.reduce((sum, [,list]) => sum + list.length, 0);
+
+    if (totalItems === 0) throw new Error('empty sheet data');
+
+    DATA = freshData;
+    items = buildItemsFromData(DATA);
+    render();
+    updateTimeEl.textContent = `資料更新時間：${formatTimestamp(new Date())}（已同步 Google 試算表最新內容）`;
+  } catch (err) {
+    DATA = [];
+    items = [];
+    checklistEl.innerHTML = `
+      <div class="empty-note">
+        無法讀取 Google 試算表資料，請確認：<br>
+        1. 網路連線是否正常<br>
+        2. 該試算表是否仍為「發布到網路」狀態<br>
+        3. 發布網址是否仍然有效<br><br>
+        <button type="button" class="btn-add" id="retryBtn">重新讀取</button>
+      </div>`;
+    document.getElementById('retryBtn').addEventListener('click', loadLiveData);
+    updateTimeEl.textContent = `資料更新時間：讀取失敗（${formatTimestamp(new Date())}）`;
+    updateSummary();
+  }
+}
+const countValueEl = document.getElementById('countValue');
+const totalWeightEl = document.getElementById('totalWeight');
+const toastEl = document.getElementById('toast');
+
+function render(){
+  checklistEl.innerHTML = '';
+  DATA.forEach(([cat]) => {
+    const catItems = items.filter(i => i.cat === cat);
+    const catChecked = catItems.filter(i => i.checked).length;
+
+    const section = document.createElement('section');
+    section.className = 'category';
+
+    const head = document.createElement('div');
+    head.className = 'category-head';
+    head.innerHTML = `<h2>${cat}</h2><span class="count">${catChecked}/${catItems.length}</span>`;
+    section.appendChild(head);
+
+    catItems.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'item-row' + (item.checked ? ' checked' : '');
+      row.dataset.id = item.id;
+
+      const weightLabel = item.weight === null ? '—' : (item.weight + ' g');
+
+      row.innerHTML = `
+        <input type="checkbox" ${item.checked ? 'checked' : ''} aria-label="選擇 ${item.name}">
+        <div>
+          <span class="item-name">${item.name}</span>
+          ${item.note ? `<span class="item-note">${item.note}</span>` : ''}
+        </div>
+        <span class="item-weight">${weightLabel}</span>
+      `;
+
+      row.addEventListener('click', (e) => {
+        item.checked = !item.checked;
+        render();
+      });
+      const cb = row.querySelector('input[type=checkbox]');
+      cb.addEventListener('click', (e) => e.stopPropagation());
+      cb.addEventListener('change', () => {
+        item.checked = cb.checked;
+        render();
+      });
+
+      section.appendChild(row);
+    });
+
+    checklistEl.appendChild(section);
+  });
+
+  updateSummary();
+}
+
+function renderCustom(){
+  customListEl.innerHTML = '';
+
+  if (customItems.length === 0){
+    const empty = document.createElement('p');
+    empty.className = 'empty-note';
+    empty.textContent = '目前沒有自訂項目，例如行動糧、預備電池這類每次行程份量不同的裝備，可以在下方新增。';
+    customListEl.appendChild(empty);
+  }
+
+  customItems.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'item-row custom' + (item.checked ? ' checked' : '');
+
+    const weightLabel = item.weight === null ? '—' : (item.weight + ' g');
+
+    row.innerHTML = `
+      <input type="checkbox" ${item.checked ? 'checked' : ''} aria-label="選擇 ${item.name}">
+      <div>
+        <span class="item-name">${item.name}</span>
+      </div>
+      <span class="item-weight">${weightLabel}</span>
+      <button type="button" class="item-delete" title="移除">×</button>
+    `;
+
+    row.querySelector('input[type=checkbox]').addEventListener('change', (e) => {
+      item.checked = e.target.checked;
+      renderCustom();
+    });
+    row.querySelector('.item-delete').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const idx = customItems.findIndex(i => i.id === item.id);
+      if (idx > -1) customItems.splice(idx, 1);
+      renderCustom();
+    });
+    row.addEventListener('click', (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      item.checked = !item.checked;
+      renderCustom();
+    });
+
+    customListEl.appendChild(row);
+  });
+
+  const checkedCustom = customItems.filter(i => i.checked).length;
+  customCountEl.textContent = `${checkedCustom}/${customItems.length}`;
+
+  updateSummary();
+}
+
+function updateSummary(){
+  const all = items.concat(customItems);
+  const checked = all.filter(i => i.checked);
+  const total = checked.reduce((sum, i) => sum + (i.weight || 0), 0);
+  countValueEl.textContent = `${checked.length} / ${all.length}`;
+  totalWeightEl.textContent = total >= 1000
+    ? (total/1000).toFixed(2) + ' kg'
+    : total + ' g';
+}
+
+function showToast(msg){
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  setTimeout(() => toastEl.classList.remove('show'), 2200);
+}
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const checked = items.concat(customItems).filter(i => i.checked);
+  if (checked.length === 0){
+    showToast('請先勾選至少一項裝備');
+    return;
+  }
+
+  const tripName = document.getElementById('tripName').value.trim() || '未命名行程';
+  const dateStart = document.getElementById('dateStart').value;
+  const dateEnd = document.getElementById('dateEnd').value;
+  const dateRange = dateStart && dateEnd ? `${dateStart} ~ ${dateEnd}`
+    : dateStart ? `${dateStart} 起`
+    : dateEnd ? `至 ${dateEnd}`
+    : '未填寫';
+
+  let total = 0;
+  const byCat = {};
+  checked.forEach(i => {
+    if (!byCat[i.cat]) byCat[i.cat] = [];
+    byCat[i.cat].push(i);
+    total += (i.weight || 0);
+  });
+
+  let lines = [];
+  lines.push(`行程：${tripName}`);
+  lines.push(`日期：${dateRange}`);
+  lines.push(`裝備件數：${checked.length}`);
+  lines.push(`總重量：${total >= 1000 ? (total/1000).toFixed(2) + ' kg' : total + ' g'}`);
+  lines.push('');
+  lines.push('----------------------------');
+
+  Object.keys(byCat).forEach(cat => {
+    lines.push('');
+    lines.push(`【${cat}】`);
+    byCat[cat].forEach(i => {
+      const w = i.weight === null ? '—' : (i.weight + 'g');
+      const note = i.note ? `（${i.note}）` : '';
+      lines.push(`  [x] ${i.name} - ${w}${note}`);
+    });
+  });
+
+  const content = lines.join('\n');
+  const blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const safeTrip = tripName.replace(/[\\/:*?"<>|]/g, '');
+  a.href = url;
+  a.download = `${safeTrip}_裝備清單.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  showToast('已匯出裝備清單');
+});
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  items.forEach(i => i.checked = false);
+  customItems.forEach(i => i.checked = false);
+  render();
+  renderCustom();
+});
+
+document.getElementById('addItemForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const nameInput = document.getElementById('newItemName');
+  const weightInput = document.getElementById('newItemWeight');
+
+  const name = nameInput.value.trim();
+  if (!name) return;
+  const weight = weightInput.value === '' ? null : parseFloat(weightInput.value);
+
+  customItems.push({
+    id: 'c' + (customUid++),
+    cat: '自訂項目',
+    name,
+    weight,
+    note: '',
+    checked: true
+  });
+
+  nameInput.value = '';
+  weightInput.value = '';
+  nameInput.focus();
+  renderCustom();
+  showToast(`已新增「${name}」`);
+});
+
+renderCustom();
+loadLiveData();
+</script>
+</body>
+</html>
