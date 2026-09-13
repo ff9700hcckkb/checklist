@@ -783,11 +783,11 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   btn.textContent = '儲存中…';
 
   try {
-    const res = await fetch(GEAR_SYNC_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify({ tripName, gearText }),
-    });
+    const url = GEAR_SYNC_URL
+      + '?tripName=' + encodeURIComponent(tripName)
+      + '&gearText=' + encodeURIComponent(gearText);
+
+    const res = await fetch(url, { method: 'GET' });
     const data = await res.json();
     if (data.ok) {
       showToast(`✅ 已儲存到登山記錄（${tripName}）`);
