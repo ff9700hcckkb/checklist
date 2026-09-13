@@ -783,39 +783,12 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   btn.textContent = '儲存中…';
 
   try {
-    await new Promise((resolve, reject) => {
-      const callbackName = 'gearSyncCallback_' + Date.now();
-      const script = document.createElement('script');
-      const timeout = setTimeout(() => {
-        delete window[callbackName];
-        document.body.removeChild(script);
-        reject(new Error('timeout'));
-      }, 10000);
+    const url = GEAR_SYNC_URL
+      + '?tripName=' + encodeURIComponent(tripName)
+      + '&gearText=' + encodeURIComponent(gearText);
 
-      window[callbackName] = (data) => {
-        clearTimeout(timeout);
-        delete window[callbackName];
-        document.body.removeChild(script);
-        if (data.ok) {
-          showToast(`✅ 已儲存到登山記錄（${tripName}）`);
-        } else {
-          showToast('❌ ' + data.message);
-        }
-        resolve();
-      };
-
-      script.src = GEAR_SYNC_URL
-        + '?callback=' + callbackName
-        + '&tripName=' + encodeURIComponent(tripName)
-        + '&gearText=' + encodeURIComponent(gearText);
-      script.onerror = () => {
-        clearTimeout(timeout);
-        delete window[callbackName];
-        document.body.removeChild(script);
-        reject(new Error('script error'));
-      };
-      document.body.appendChild(script);
-    });
+    await fetch(url, { method: 'GET', mode: 'no-cors' });
+    showToast(`✅ 已儲存到登山記錄（${tripName}）`);
   } catch (err) {
     showToast('❌ 網路錯誤，請稍後再試');
   } finally {
