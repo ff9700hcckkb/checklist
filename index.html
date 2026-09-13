@@ -737,7 +737,7 @@ loadLiveData();
 
 // ── 儲存到登山記錄 ──────────────────────────────────
 // 部署 Apps Script 後，把網頁應用程式網址貼到這裡
-const GEAR_SYNC_URL = '請貼上你的 Apps Script 網頁應用程式網址';
+const GEAR_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyN71bui3fIFBckDEpWqMijS0f-p6rR1YwmnL1o05-zuq28ztVwU9tVqEax-jO6jF9mPA/exec';
 
 document.getElementById('saveBtn').addEventListener('click', async () => {
   const checked = items.concat(customItems).filter(i => i.checked);
@@ -783,17 +783,39 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   btn.textContent = '儲存中…';
 
   try {
-    const url = GEAR_SYNC_URL
-      + '?tripName=' + encodeURIComponent(tripName)
-      + '&gearText=' + encodeURIComponent(gearText);
+    await new Promise((resolve, reject) => {
+      const callbackName = 'gearSyncCallback_' + Date.now();
+      const script = document.createElement('script');
+      const timeout = setTimeout(() => {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        reject(new Error('timeout'));
+      }, 10000);
 
-    const res = await fetch(url, { method: 'GET' });
-    const data = await res.json();
-    if (data.ok) {
-      showToast(`✅ 已儲存到登山記錄（${tripName}）`);
-    } else {
-      showToast('❌ ' + data.message);
-    }
+      window[callbackName] = (data) => {
+        clearTimeout(timeout);
+        delete window[callbackName];
+        document.body.removeChild(script);
+        if (data.ok) {
+          showToast(`✅ 已儲存到登山記錄（${tripName}）`);
+        } else {
+          showToast('❌ ' + data.message);
+        }
+        resolve();
+      };
+
+      script.src = GEAR_SYNC_URL
+        + '?callback=' + callbackName
+        + '&tripName=' + encodeURIComponent(tripName)
+        + '&gearText=' + encodeURIComponent(gearText);
+      script.onerror = () => {
+        clearTimeout(timeout);
+        delete window[callbackName];
+        document.body.removeChild(script);
+        reject(new Error('script error'));
+      };
+      document.body.appendChild(script);
+    });
   } catch (err) {
     showToast('❌ 網路錯誤，請稍後再試');
   } finally {
