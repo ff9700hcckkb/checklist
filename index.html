@@ -787,7 +787,10 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
       + '?tripName=' + encodeURIComponent(tripName)
       + '&gearText=' + encodeURIComponent(gearText);
 
-    await fetch(url, { method: 'GET', mode: 'no-cors' });
+    // no-cors: 資料會送出，但瀏覽器不讓 JS 讀取回應（Safari 會拋出 TypeError，這是正常的）
+    fetch(url, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+    // 等待一秒讓請求送出後再顯示成功
+    await new Promise(r => setTimeout(r, 1000));
     showToast(`✅ 已儲存到登山記錄（${tripName}）`);
   } catch (err) {
     showToast('❌ 網路錯誤，請稍後再試');
