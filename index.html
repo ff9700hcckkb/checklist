@@ -162,6 +162,14 @@
     margin-top:8px;
   }
   .btn-clear:hover{border-color:var(--ink-soft); color:var(--ink);}
+  .btn-save{
+    background:var(--forest);
+    color:#FBF8F1;
+    margin-top:8px;
+  }
+  .btn-save:hover{background:var(--forest-dark);}
+  .btn-save:active{transform:scale(0.98);}
+  .btn-save:disabled{opacity:0.5; cursor:not-allowed; transform:none;}
   main{padding:24px 28px 110px;}
   .footer-bar{
     position:fixed;
@@ -415,6 +423,7 @@
       <span class="value" id="totalWeight">0 g</span>
     </div>
     <button class="btn btn-export" id="exportBtn">匯出裝備清單</button>
+    <button class="btn btn-save" id="saveBtn">💾 儲存到登山記錄</button>
     <button class="btn btn-clear" id="clearBtn">清空勾選</button>
   </div>
 </footer>
@@ -809,6 +818,66 @@ document.getElementById('addItemForm').addEventListener('submit', (e) => {
 renderEssentials();
 renderCustom();
 loadLiveData();
+
+// ── 儲存到登山記錄 ─────────────────────────────────────
+const GEAR_SYNC_URL = 'https://script.google.com/macros/s/AKfycbyN71bui3fIFBckDEpWqMijS0f-p6rR1YwmnL1o05-zuq28ztVwU9tVqEax-jO6jF9mPA/exec';
+
+document.getElementById('saveBtn').addEventListener('click', async () => {
+  const checked = items.concat(customItems, ESSENTIAL_ITEMS).filter(i => i.checked);
+  if (checked.length === 0) {
+    showToast('請先勾選至少一項裝備');
+    return;
+  }
+
+  const tripName = document.getElementById('tripName').value.trim();
+  if (!tripName) {
+    showToast('請先填寫行程名稱');
+    return;
+  }
+
+  // 組成裝備文字
+  let total = 0;
+  const byCat = {};
+  checked.forEach(i => {
+    if (!byCat[i.cat]) byCat[i.cat] = [];
+    byCat[i.cat].push(i);
+    total += (i.weight || 0);
+  });
+
+  let lines = [];
+  lines.push(`裝備件數：${checked.length}`);
+  lines.push(`總重量：${total >= 1000 ? (total/1000).toFixed(2) + ' kg' : total + ' g'}`);
+  lines.push('');
+  Object.keys(byCat).forEach(cat => {
+    lines.push(`【${cat}】`);
+    byCat[cat].forEach(i => {
+      const w = i.weight === null ? '—' : (i.weight + 'g');
+      const note = i.note ? `（${i.note}）` : '';
+      lines.push(`  ${i.name} - ${w}${note}`);
+    });
+    lines.push('');
+  });
+  const gearText = lines.join('\n').trim();
+
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '儲存中…';
+
+  try {
+    const url = GEAR_SYNC_URL
+      + '?tripName=' + encodeURIComponent(tripName)
+      + '&gearText=' + encodeURIComponent(gearText);
+
+    fetch(url, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+    await new Promise(r => setTimeout(r, 1000));
+    showToast(`✅ 已儲存到登山記錄（${tripName}）`);
+  } catch (err) {
+    showToast('❌ 網路錯誤，請稍後再試');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 儲存到登山記錄';
+  }
+});
 </script>
 </body>
 </html>
