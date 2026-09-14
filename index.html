@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>裝備清單 · 行程打包工具</title>
+<title>裝備清單</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&family=Noto+Sans+TC:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
@@ -362,8 +362,8 @@
   </svg>
   <div class="contour-inner">
     <p class="eyebrow">行程裝備清單工具</p>
-    <h1>這趟要帶什麼</h1>
-    <p class="sub">輸入行程與日期，勾選這趟會用到的裝備，重量會即時加總，最後把清單匯出成文字檔。</p>
+    <h1>這趟帶什麼</h1>
+    <p class="sub">輸入行程與日期，勾選這趟會用到的裝備，重量會即時加總，可把清單匯出成文字檔，或寫入登山記錄。</p>
     <p class="update-time" id="updateTime">正在讀取最新裝備資料…</p>
   </div>
 </div>
@@ -372,7 +372,7 @@
   <aside>
     <div class="field">
       <label for="tripName">行程名稱</label>
-      <input type="text" id="tripName" placeholder="例：南湖大山 O 型">
+      <input type="text" id="tripName">
     </div>
     <div class="field">
       <label>日期區間</label>
@@ -388,10 +388,10 @@
   <main>
     <section class="category essentials-category" id="essentialsCategory">
       <div class="category-head">
-        <h2>必備項目（重量依行程調整）</h2>
+        <h2>必備項目</h2>
         <span class="count" id="essentialsCount">0/0</span>
       </div>
-      <p class="empty-note">水和行動糧幾乎每趟都會帶，但份量看天數、水源而定，直接在下面填這趟要帶的重量就好。</p>
+      <p class="empty-note">必備項目，若未列出，再到下方手動新增</p>
       <div id="essentialsList"></div>
     </section>
 
@@ -546,7 +546,7 @@ async function loadLiveData(){
     DATA = freshData;
     items = buildItemsFromData(DATA);
     render();
-    updateTimeEl.textContent = `資料更新時間：${formatTimestamp(new Date())}（已同步 Google 試算表最新內容）`;
+    updateTimeEl.textContent = `資料更新時間：${formatTimestamp(new Date())}`;
   } catch (err) {
     DATA = [];
     items = [];
