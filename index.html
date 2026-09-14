@@ -851,9 +851,7 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   Object.keys(byCat).forEach(cat => {
     lines.push(`【${cat}】`);
     byCat[cat].forEach(i => {
-      const w = i.weight === null ? '—' : (i.weight + 'g');
-      const note = i.note ? `（${i.note}）` : '';
-      lines.push(`  ${i.name} - ${w}${note}`);
+      lines.push(`  ${i.name}`);
     });
     lines.push('');
   });
