@@ -362,8 +362,8 @@
   </svg>
   <div class="contour-inner">
     <p class="eyebrow">行程裝備清單工具</p>
-    <h1>這趟帶什麼</h1>
-    <p class="sub">輸入行程與日期，勾選這趟會用到的裝備，重量會即時加總，可把清單匯出成文字檔，或寫入登山記錄。</p>
+    <h1>這趟要帶什麼</h1>
+    <p class="sub">輸入行程與日期，勾選這趟會用到的裝備，重量會即時加總，可把清單匯出成文字檔或寫入登山記錄。</p>
     <p class="update-time" id="updateTime">正在讀取最新裝備資料…</p>
   </div>
 </div>
@@ -391,7 +391,7 @@
         <h2>必備項目</h2>
         <span class="count" id="essentialsCount">0/0</span>
       </div>
-      <p class="empty-note">必備項目，若未列出，再到下方手動新增</p>
+      <p class="empty-note">水和行動糧幾乎每趟都會帶，但份量看天數、水源而定，直接在下面填這趟要帶的重量就好。</p>
       <div id="essentialsList"></div>
     </section>
 
@@ -851,9 +851,10 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
   Object.keys(byCat).forEach(cat => {
     lines.push(`【${cat}】`);
     byCat[cat].forEach(i => {
-      lines.push(`  ${i.name}`);
+      const isEssential = ESSENTIAL_ITEMS.some(e => e.id === i.id);
+      const w = isEssential && i.weight ? `（${i.weight >= 1000 ? (i.weight/1000).toFixed(1)+'kg' : i.weight+'g'}）` : '';
+      lines.push(`  ${i.name}${w}`);
     });
-    lines.push('');
   });
   const gearText = lines.join('\n').trim();
 
